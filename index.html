@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Event Waste & Donation Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #d7ffd9, #b2f2bb);
+    color: #333;
+  }
+  header {
+    background: #2e7d32;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+  }
+  main {
+    max-width: 650px;
+    margin: 40px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+  input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+  button {
+    background: #43a047;
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    margin-top: 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+  }
+  button:hover {
+    background: #2e7d32;
+  }
+  #result {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #333;
+    line-height: 1.6;
+  }
+
+  .bottle {
+    position: fixed;
+    bottom: 20px;
+    right: 25px;
+    width: 60px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+  }
+  .bottle:hover { transform: scale(1.1); }
+
+  #chatbot {
+    display: none;
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 300px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    overflow: hidden;
+    flex-direction: column;
+    z-index: 1001;
+  }
+  #chatbot header {
+    background: #2e7d32;
+    color: white;
+    padding: 10px;
+    font-size: 1rem;
+    text-align: center;
+  }
+  #chatbot-messages {
+    padding: 10px;
+    height: 220px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+  }
+  #chatbot input {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-top: 1px solid #ccc;
+    font-size: 1rem;
+  }
+  #chatbot input:focus {
+    outline: none;
+  }
+
+  @media (max-width: 600px) {
+    main { margin: 20px; padding: 20px; }
+    .bottle { width: 50px; }
+    #chatbot { width: 90%; right: 5%; }
+  }
+</style>
+</head>
+<body>
+<header>🌱 Smart Event Waste & Donation Tracker</header>
+<main>
+  <label>Event Name:</label>
+  <input type="text" id="eventName" placeholder="e.g., College Fest" />
+
+  <label>People Invited:</label>
+  <input type="number" id="prepared" placeholder="e.g., 200" />
+
+  <label>People Attended:</label>
+  <input type="number" id="used" placeholder="e.g., 150" />
+
+  <button onclick="calculateWaste()">Calculate Waste</button>
+  <div id="result"></div>
+
+  <button onclick="goToMap()">Find Nearby Donation Centers</button>
+</main>
+
+<img src="https://cdn-icons-png.flaticon.com/512/6176/6176487.png" class="bottle" title="A mysterious bottle..." onclick="toggleChat()" />
+<div id="chatbot">
+  <header>🤖 Whispering Bottle</header>
+  <div id="chatbot-messages"></div>
+  <input type="text" id="userInput" placeholder="Ask something..." onkeypress="if(event.key==='Enter')sendMessage()" />
+</div>
+
+<script>
+function calculateWaste() {
+  const prepared = parseFloat(document.getElementById("prepared").value);
+  const used = parseFloat(document.getElementById("used").value);
+  const eventName = document.getElementById("eventName").value || "Your Event";
+
+  if (isNaN(prepared) || isNaN(used) || prepared <= 0 || used < 0 || used > prepared) {
+    document.getElementById("result").innerHTML = "⚠️ Please enter valid numbers.";
+    return;
+  }
+
+  const waste = prepared - used;
+  const wastePercent = ((waste / prepared) * 100).toFixed(1);
+
+  document.getElementById("result").innerHTML =
+    `<p>🍽️ <b>${eventName}</b> had ${prepared} people invited, but only ${used} attended.</p>
+     <p>💡 That’s <b>${waste}</b> meals wasted (${wastePercent}%). Consider donating leftovers!</p>`;
+}
+
+function goToMap() {
+  window.location.href = "map.html";
+}
+
+function toggleChat() {
+  const bot = document.getElementById("chatbot");
+  bot.style.display = bot.style.display === "flex" ? "none" : "flex";
+}
+
+function sendMessage() {
+  const input = document.getElementById("userInput");
+  const text = input.value.trim();
+  if (!text) return;
+  appendMessage("You", text);
+  input.value = "";
+  fetchAIResponse(text);
+}
+
+function appendMessage(sender, text) {
+  const msgContainer = document.getElementById("chatbot-messages");
+  const div = document.createElement("div");
+  div.innerHTML = `<b>${sender}:</b> ${text}`;
+  msgContainer.appendChild(div);
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+function fetchAIResponse(prompt) {
+  const response = getLocalResponse(prompt);
+  document.getElementById("chatbot-messages").lastChild.innerHTML = `<b>Bottle:</b> ${response}`;
+  speak(response);
+}
+
+function getLocalResponse(input) {
+  const msg = input.toLowerCase();
+
+  if (msg.includes("hello") || msg.includes("hi")) {
+    return "Hello there! How can I help you today?";
+  } else if (msg.includes("how are you")) {
+    return "I'm just a bottle full of wisdom. Feeling bubbly!";
+  } else if (msg.includes("your name")) {
+    return "I'm the Whispering Bottle, your event companion.";
+  } else if (msg.includes("waste") && msg.includes("calculate")) {
+    return "Use the form above to calculate food waste based on attendance. It's quick and insightful!";
+  } else if (msg.includes("waste") && msg.includes("reduce")) {
+    return "To reduce waste, plan portions carefully, track attendance trends, and donate leftovers when possible.";
+  } else if (msg.includes("waste segregation") || msg.includes("segregate")) {
+    return "Segregating waste into wet, dry, and hazardous categories helps improve recycling and disposal efficiency.";
+  } else if (msg.includes("compost") || msg.includes("composting")) {
+    return "Composting food waste is a great way to turn scraps into nutrient-rich soil. Try it for your next event!";
+  } else if (msg.includes("recycle")) {
+    return "Recycling helps reduce landfill waste. Make sure to separate recyclables like paper, plastic, and glass.";
+  } else if (msg.includes("donation") || msg.includes("food center")) {
+    return "Click the 'Find Nearby Donation Centers' button to see places on the map.";
+  } else if (msg.includes("leftover") || msg.includes("extra food")) {
+    return "Leftover food can be donated to local shelters or food banks. Always store it safely and act quickly!";
+  } else if (msg.includes("eco-friendly") || msg.includes("sustainable")) {
+    return "Hosting an eco-friendly event? Use reusable cutlery, avoid single-use plastics, and minimize food waste!";
+  } else if (msg.includes("bye") || msg.includes("goodbye")) {
+    return "Goodbye! May your events be waste-free!";
+  } else {
+    return "Hmm... I’m not sure how to respond to that. Try asking about waste reduction, composting, or donation tips!";
+  }
+}
+
+function speak(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices();
+  utter.voice = voices.find(v => v.lang.startsWith("en")) || voices[0];
+  speechSynthesis.speak(utter);
+}
+</script>
+</body>
+</html>
