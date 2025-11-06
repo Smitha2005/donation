@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Donation Centers</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+  body, html {
+    margin: 0;
+    height: 100%;
+    font-family: "Poppins", sans-serif;
+  }
+  #map {
+    height: 100vh;
+  }
+  #back {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: #2e7d32;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 1000;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<div id="back" onclick="window.location.href='index.html'">⬅ Back</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  const map = L.map("map").setView([12.9716, 77.5946], 12); // Centered on Bengaluru
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  const donationCenters = [
+    { name: "Robin Hood Army", coords: [12.9719, 77.6412] },
+    { name: "Feeding India", coords: [12.9655, 77.6101] },
+    { name: "Akshaya Patra", coords: [12.9386, 77.5895] },
+  ];
+
+  donationCenters.forEach(center => {
+    L.marker(center.coords)
+      .addTo(map)
+      .bindPopup(`<b>${center.name}</b><br>Accepts food donations`);
+  });
+</script>
+</body>
+</html>
